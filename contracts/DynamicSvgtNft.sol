@@ -2,6 +2,7 @@
 pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "base64-sol/base64.sol";
 
 contract DynamicSvgNft is ERC721 {
@@ -10,12 +11,23 @@ contract DynamicSvgNft is ERC721 {
     //otherwise: Frown
 
     uint public s_tokenCounter;
+    string public s_lowImageURI;
+    string public s_highImageURI;
+    int256 public immutable i_highValue;
+    AggregatorV3Interface public immutable i_priceFeed;
 
     //Pass SVG files and convert those files to base64 format
-    constructor(string memory lowSvg, string memory highSvg)
-        ERC721("Dynamic SVG NFT", "DSN")
-    {
+    constructor(
+        address priceFeedAddress,
+        string memory lowSvg,
+        string memory highSvg,
+        int256 highValue
+    ) ERC721("Dynamic SVG NFT", "DSN") {
         s_tokenCounter = 0;
+        s_lowImageURI = svgToImageURI(lowSvg);
+        s_highImageURI = svgToImageURI(highSvg);
+        i_priceFeed = AggregatorV3Interface(priceFeedAddress);
+        i_highValue = highValue;
     }
 
     //returns imageURIs
@@ -44,20 +56,25 @@ contract DynamicSvgNft is ERC721 {
 
     //override tokenURI inherited function from ERC721
     //"virtual" means function can be overriden
-    function tokenURI(uint tokenId)
-        public
-        view
-        override
-        returns (string memory)
-    {
+    function tokenURI(
+        uint /*tokenId*/
+    ) public view override returns (string memory) {
         //How do we base64 encode this string -> URL/URI
         //How do we get the image?
-        string
-            memory metaDataTemplate = '{"name":"Dynamic SVG", "description": "a cool NFT", "attributes":[{"trait_type":"coolness","value":100}], "image":"????????"}';
+        (, int256 price, , , ) = i_priceFeed.latestRoundData();
+        string memory imageUri = s_lowImageURI;
+        if (price > i_highValue) {
+            imageUri = s_highImageURI;
+        }
+
+        bytes memory metaDataTemplate = (
+            abi.encodePacked(
+                '{"name":"Dynamic SVG", "description": "a cool NFT", "attributes":[{"trait_type":"coolness","value":100}], "image":",imageUri,"""}'
+            )
+        );
 
         bytes memory metaDataTemplateinBytes = bytes(metaDataTemplate);
         string memory encodedMetadata = Base64.encode(metaDataTemplateinBytes);
-
         return (string(abi.encodePacked(_baseURI(), encodedMetadata))); //concatenate string
     }
 }
