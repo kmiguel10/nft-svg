@@ -51,7 +51,7 @@ contract DynamicSvgNft is ERC721 {
 
     //Returns string to be used from converting svg -> base64
     function _baseURI() internal pure override returns (string memory) {
-        return "data:application/json";
+        return "data:application/json;base64,";
     }
 
     //override tokenURI inherited function from ERC721
@@ -69,7 +69,10 @@ contract DynamicSvgNft is ERC721 {
 
         bytes memory metaDataTemplate = (
             abi.encodePacked(
-                '{"name":"Dynamic SVG", "description": "a cool NFT", "attributes":[{"trait_type":"coolness","value":100}], "image":",imageUri,"""}'
+                '{"name":"Dynamic SVG", "description":"An NFT that changes based on the Chainlink Feed", ',
+                '"attributes": [{"trait_type": "coolness", "value": 100}], "image":"',
+                imageUri,
+                '"}'
             )
         );
 

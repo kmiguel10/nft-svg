@@ -17,8 +17,10 @@ module.exports = async function (hre) {
     ethUsdPriceFeedAddress = "0x8A753747A1Fa494EC906cE90E9f37563A8AF630e";
   }
 
-  const highValue = 200000000000;
-  const lowSvg = await fs.readFileSync("./img/frown.svg", { encoding: "utf8" });
+  const highValue = 180000000000;
+  const lowSvg = await fs.readFileSync("./img/frown.svg", {
+    encoding: "utf8",
+  });
   const highSvg = await fs.readFileSync("./img/happy.svg", {
     encoding: "utf8",
   });
@@ -32,6 +34,7 @@ module.exports = async function (hre) {
   const dynamicContract = await ethers.getContract("DynamicSvgNft");
   await dynamicContract.mintNft();
   log("Minted NFT!");
+  log("current nft price:", ethUsdPriceFeedAddress);
 };
 
 module.exports.tags = ["all", "dynamicsvg"];
